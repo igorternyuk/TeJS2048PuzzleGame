@@ -1,11 +1,3 @@
-const Direction = Object.freeze({
- 	LEFT: { dx: -1, dy: 0 },
- 	RIGHT: { dx: +1, dy: 0 },
- 	UP: { dx: 0, dy: -1 },
- 	DOWN: { dx: 0, dy: 1 }
- });
-
-
 class Tile {
 	constructor(x, y, value){
 		this.x = x;
@@ -27,24 +19,24 @@ class Tile {
 	}
 
 	render(){
-		noStroke();
-		fill(getColor(this.value));
-		rect(this.x +HALF_GAP, this.y + HALF_GAP, tileSize - HALF_GAP,
-		 tileSize - HALF_GAP);
-		fill(0,0,0);
-		textFont('Arial');
-		textAlign(CENTER, CENTER);
-		textSize(48);
-		noStroke();
-		text(this.value, this.x + tileSize / 2 + HALF_GAP,
-		 this.y + tileSize / 2 + HALF_GAP);
+		if(this.value > 0){
+			noStroke();
+			fill(getColor(this.value));
+			rect(this.x + HALF_GAP, this.y + HALF_GAP, tileSize - HALF_GAP,
+			 tileSize - HALF_GAP);
+			fill(0,0,0);
+			textFont('Consolas');
+			textAlign(CENTER, CENTER);
+			textSize(54);
+			noStroke();
+			text(this.value, this.x + tileSize / 2 + HALF_GAP,
+			 this.y + tileSize / 2 + HALF_GAP);
+		}
 	}
 }
 
 function getColor(value){
 	switch(value){
-		case 0:
-			return '#2c3e50';
         case 2:
         	return '#1abc9c';
         case 4:

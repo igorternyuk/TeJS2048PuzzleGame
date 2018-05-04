@@ -31,7 +31,7 @@ class Tile {
 			}			
 
 			rect(this.x + HALF_GAP, this.y + HALF_GAP, tileSize - HALF_GAP,
-			 tileSize - HALF_GAP);
+			 tileSize - HALF_GAP, RADIUS, RADIUS);
 			fill(0,0,0);
 			textFont('Arial');
 			textAlign(CENTER, CENTER);

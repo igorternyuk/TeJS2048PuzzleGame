@@ -18,6 +18,7 @@ const WINNIG_SCORE = 2048;
 const START_TILE_COUNT = 2;
 const ANIMATION_SPEED = 10;
 const SIDE_INFO_PANEL_WIDTH = 300;
+const RADIUS = 40;
 var tileSize = 100;
 let rowCount = 4;
 let colCount = 4;
@@ -30,6 +31,7 @@ let gameState = GameState.PLAYING;
 let slidingDirection = Direction.RIGHT;
 let maxTileValue = 2;
 let score = 0;
+let numMoves = 0;
 let isAnimationActive = false;
 
 function setup() {
@@ -67,6 +69,7 @@ function startNewGame(){
 	maxTileValue = 2;
  	score = 0;
 	isAnimationActive = false;
+	numMoves = 0;
 	tiles = [];
 	mergingTiles = [];
 	grid = createMatrix(rowCount,colCount, 0);
@@ -290,7 +293,7 @@ function renderEmptyField(){
 			fill("#b28e77");
 			noStroke();
 			rect(x * tileSize + HALF_GAP, y * tileSize + HALF_GAP,
-		 		 tileSize - HALF_GAP, tileSize - HALF_GAP);	
+		 		 tileSize - HALF_GAP, tileSize - HALF_GAP, RADIUS, RADIUS);	
 		});
 	});
 }
@@ -350,6 +353,7 @@ function gameTick(){
 
 			if(checkIfSomethingMoved()){
 				placeNewTile();
+				++numMoves;
 			}
 		}
 	}
@@ -389,13 +393,17 @@ function draw() {
 
 function renderGameInfo(){
 	const rightBorder = colCount * tileSize;
+	fill(200,200,200);
 	noStroke();
+	rect(rightBorder + HALF_GAP, 0, canvasWidth - rightBorder, canvasHeight);
 	textSize(36);
 	textAlign(LEFT, TOP);
 	fill(0,127,0);
-	text("Score: " + score, rightBorder + 5, 5);
+	text("Score: " + score, rightBorder + HALF_GAP, 5);
 	fill(127,0,0);
-	text("Max value: " + maxTileValue, rightBorder + 5, 50);
+	text("Max value: " + maxTileValue, rightBorder + HALF_GAP, 50);
+	fill(255,255,0);
+	text("Move number: " + numMoves, rightBorder + HALF_GAP, 100);
 	fill(0,0,127);
 	textSize(24);
 	switch(gameState){
@@ -403,12 +411,12 @@ function renderGameInfo(){
 			fill(0,255,0);
 			text("Congratulations!You won!!!\n" +
 				"Press space to keep going\n" + 
-				"or N to start new game", rightBorder + 5, 100);
+				"or N to start new game", rightBorder + HALF_GAP, 150);
 			break;
 		case GameState.DEFEAT:
 			fill(255,0,0);
 			text("Game over!!!\nPress N to start new game", 
-				rightBorder + 5, 100);
+				rightBorder + HALF_GAP, 150);
 			break;
 		default:
 			break;

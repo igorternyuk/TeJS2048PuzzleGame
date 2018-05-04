@@ -1,5 +1,3 @@
-
-
 function getColorSize(value){
 	switch(value){
         case 2:

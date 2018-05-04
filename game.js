@@ -35,9 +35,17 @@ function setup() {
     frameRate(50);
     grid = createMatrix(rowCount,colCount, 0);
     oldGrid = copyMatrix(grid);
-    console.log(getFlippedSpot({x:0, y:0}, 4));
-    console.log(getFlippedSpot({x:1, y:0}, 4));
-    console.log(getFlippedSpot({x:1, y:1}, 4));
+    console.log(getFlippedSpot({x:0,y:0}, 4, false));
+    console.log("clockwise => ", getRotatedSpot({x:0,y:0}, 4, true));
+    console.log("counterclockwise => ",getRotatedSpot({x:0,y:0}, 4, false));
+    mtr = [
+    	[2,0,2,4],
+    	[2,2,2,2],
+    	[4,0,4,0],
+    	[0,0,0,0]
+    ];
+    rotateMatrix(mtr, false);
+    console.table(mtr);
     //addTile();
     //addTile();
     createTestTiles();
@@ -122,11 +130,12 @@ function findTileByCoords(x,y){
 			//rotateMatrix(grid, false);
 			break;
 		case Direction.UP:
-			spot = getFlippedSpot(getTransposedSpot(spot), colCount, false);
+			//spot = getRotatedSpot(spot, rowCount, true);
+			spot = getTransposedSpot(getFlippedSpot(spot, rowCount, true));
 			//rotateMatrix(grid, true);
 			break;
 		case Direction.LEFT:
-			spot = getFlippedSpot(spot, rowCount, true);
+			spot = getFlippedSpot(spot, colCount);
 			//flipMatrix(grid, true);
 			break;
 	}
@@ -138,6 +147,7 @@ function findTileByCoords(x,y){
 			return tiles[i];
 		}
 	}
+	console.log("Spot not found x = " + x + " y = " + y + " spot.x = " + spot.x + " spot.y = " + spot.y);
 	return undefined;
 }
 
@@ -156,13 +166,15 @@ function slide(direction){
 			break;
 		case Direction.UP:
 			slidingDirection = Direction.UP;
-			rotateMatrix(grid, true);
+			transposeMatrix(grid);
+			flipMatrix(grid, true);
+			//rotateMatrix(grid, false);
+			console.log("Matrix after rotation");
+			console.table(grid);
 			break;
 		case Direction.LEFT:
 			slidingDirection = Direction.LEFT;
-			//console.log("trying to slide left");
-			flipMatrix(grid, true);
-			//console.table(grid);
+			flipMatrix(grid);
 			break;
 	}
 
@@ -188,8 +200,8 @@ function slide(direction){
 							grid[y][col] = 0;
 							mergingTiles.push({toMerge: tileToMerge, toRemove: tileToSlide, merged: false });
 							isMerging = true;
-							break inner;
 						}
+						break inner;
 					} else {
 						break inner;
 					}
@@ -212,16 +224,17 @@ function slide(direction){
 						//rotateMatrix(grid, false);
 						break;
 					case Direction.UP:
-						destSpot = getRotatedSpot(destSpot, rowCount, false);
+						destSpot = getTransposedSpot(getFlippedSpot(destSpot, rowCount, true));
+						//destSpot = getRotatedSpot(destSpot, rowCount);
 						//rotateMatrix(grid, true);
 						break;
 					case Direction.LEFT:
-						destSpot = getFlippedSpot(destSpot, rowCount, true);
+						destSpot = getFlippedSpot(destSpot, colCount);
 						//flipMatrix(grid, true);
 						break;
 				}
 
-				
+				console.log("destSpot = ", destSpot);
 				tileToSlide.destX = destSpot.x * tileSize;
 				tileToSlide.destY = destSpot.y * tileSize;
 				console.log("tileToSlide.destX = " + tileToSlide.destX);
@@ -239,10 +252,11 @@ function slide(direction){
 			transposeMatrix(grid);
 			break;
 		case Direction.UP:
-			rotateMatrix(grid, false);
+			flipMatrix(grid, true);
+			transposeMatrix(grid);
 			break;
 		case Direction.LEFT:
-			flipMatrix(grid, true);
+			flipMatrix(grid);
 			break;
 	}
 

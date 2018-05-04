@@ -14,7 +14,7 @@ const Direction = Object.freeze({
 
 const FOUR_PROBABILITY = 0.1;
 const HALF_GAP = 7;
-const WINNIG_SCORE = 32;
+const WINNIG_SCORE = 2048;
 const START_TILE_COUNT = 2;
 const ANIMATION_SPEED = 10;
 const SIDE_INFO_PANEL_WIDTH = 300;
@@ -91,10 +91,10 @@ function placeNewTile(){
 			maxTileValue = randValue;
 		}
 
-	} else {
-		if(checkGameOver()){
-			gameState = GameState.DEFEAT;
-		}
+	}
+
+	if(checkGameOver()){
+		gameState = GameState.DEFEAT;
 	}
 }
 
@@ -223,7 +223,8 @@ function slide(direction){
 							tileToSlide.isMerged = true;
 							grid[y][col + 1] *= 2;
 							grid[y][col] = 0;
-							mergingTiles.push({toMerge: tileToMerge, toRemove: tileToSlide, merged: false });
+							mergingTiles.push({toMerge: tileToMerge,
+							 toRemove: tileToSlide, merged: false });
 							isMerging = true;
 						}
 						break inner;
@@ -400,11 +401,14 @@ function renderGameInfo(){
 	switch(gameState){
 		case GameState.SUCCEEDED_2048:
 			fill(0,255,0);
-			text("Congratulations!You won!!!\nPress space to keep going\nor N to start new game", rightBorder + 5, 100);
+			text("Congratulations!You won!!!\n" +
+				"Press space to keep going\n" + 
+				"or N to start new game", rightBorder + 5, 100);
 			break;
 		case GameState.DEFEAT:
 			fill(255,0,0);
-			text("Game over!!!\nPress N to start new game", rightBorder + 5, 100);
+			text("Game over!!!\nPress N to start new game", 
+				rightBorder + 5, 100);
 			break;
 		default:
 			break;

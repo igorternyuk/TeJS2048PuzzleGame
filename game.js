@@ -15,6 +15,7 @@ const Direction = Object.freeze({
 const FOUR_PROBABILITY = 0.1;
 const HALF_GAP = 7;
 const WINNIG_SCORE = 2048;
+const START_TILE_COUNT = 2;
 var tileSize = 100;
 let rowCount = 4;
 let colCount = 4;
@@ -34,29 +35,19 @@ function setup() {
     createCanvas(canvasWidth, canvasHeight);
     frameRate(50);
     grid = createMatrix(rowCount,colCount, 0);
-    oldGrid = copyMatrix(grid);
-    console.log(getFlippedSpot({x:0,y:0}, 4, false));
-    console.log("clockwise => ", getRotatedSpot({x:0,y:0}, 4, true));
-    console.log("counterclockwise => ",getRotatedSpot({x:0,y:0}, 4, false));
-    mtr = [
-    	[2,0,2,4],
-    	[2,2,2,2],
-    	[4,0,4,0],
-    	[0,0,0,0]
-    ];
-    rotateMatrix(mtr, false);
-    console.table(mtr);
-    //addTile();
-    //addTile();
+    /*for(let i = 0; i < START_TILE_COUNT; ++i){
+    	placeNewTile();
+    }*/
     createTestTiles();
+    oldGrid = copyMatrix(grid);
 }
 
 function createTestTiles(){
 	grid[0][0] = 2;
     let tile = new Tile(0 * tileSize, 0 * tileSize, 2);
 	tiles.push(tile);
-	grid[0][2] = 2;
-	tiles.push(new Tile(2 * tileSize, 0 * tileSize, 2));
+	grid[0][2] = 16384;
+	tiles.push(new Tile(2 * tileSize, 0 * tileSize, 16384));
 	grid[0][3] = 4;
 	tiles.push(new Tile(3 * tileSize, 0 * tileSize, 4));
 	for(let i = 0; i < 4; ++i){
@@ -64,33 +55,29 @@ function createTestTiles(){
 		tiles.push(new Tile(i * tileSize, tileSize, 2));
 	}
 
-	grid[2][0] = 4;
-	tiles.push(new Tile(0 * tileSize, 2 * tileSize, 4));
+	grid[2][0] = 1024;
+	tiles.push(new Tile(0 * tileSize, 2 * tileSize, 1024));
 
-	grid[2][2] = 4;
-	tiles.push(new Tile(2 * tileSize, 2 * tileSize, 4));
+	grid[2][2] = 512;
+	tiles.push(new Tile(2 * tileSize, 2 * tileSize, 512));
 }
-    /*
-}
-function getFlippedSpot(spot, dimension, horizontally = true){
-function getRotatedSpot(spot, dimension, clockwise = true){
-    */
 
-function addTile(){
-	emptySpots = [];
-	grid.forEach((row, i) => {
-		row.forEach((val, j) => {
-			if(val === 0){
-				emptySpots.push({x:j, y:i});
-			}
-		});
-	});
+function startNewGame(){
+
+}
+
+
+function placeNewTile(){
+	let emptySpots = getEmptySpots();
 
 	if(emptySpots.length > 0){
 		let randSpot = random(emptySpots);
 		let randValue = random(1) < FOUR_PROBABILITY ?  4 : 2;
 		grid[randSpot.y][randSpot.x] = randValue;
 		tiles.push(new Tile(randSpot.x * tileSize, randSpot.y * tileSize, randValue));
+		if(randValue > maxTileValue){
+			maxTileValue = randValue;
+		}
 
 	} else {
 		if(checkGameOver()){
@@ -99,7 +86,36 @@ function addTile(){
 	}
 }
 
+function getEmptySpots(){
+	let emptySpots = [];
+	grid.forEach((row, i) => {
+		row.forEach((val, j) => {
+			if(val === 0){
+				emptySpots.push({x:j, y:i});
+			}
+		});
+	});
+	return emptySpots;
+}
 
+function checkGameOver(){
+	let emptySpots = getEmptySpots();
+	if(emptySpots.length > 0){
+		return false;
+	} else {
+		for(let y = 0; y < grid.length; ++y){
+			for(let x = 0; x < grid[y].length; ++x){
+				let neighbours = getNeighbours(x,y);
+				for(let i = 0; i < neighbours.length; ++i){
+					if(neighbours[i] === grid[y][x]){
+						return false;
+					}
+				}
+			}
+		}
+		return true;
+	}
+}
 
 function getNeighbours(x, y){
 	let neighbours = [];
@@ -127,16 +143,13 @@ function findTileByCoords(x,y){
 			break;
 		case Direction.DOWN:
 			spot = getTransposedSpot(spot);
-			//rotateMatrix(grid, false);
 			break;
 		case Direction.UP:
-			//spot = getRotatedSpot(spot, rowCount, true);
-			spot = getTransposedSpot(getFlippedSpot(spot, rowCount, true));
-			//rotateMatrix(grid, true);
+			spot = getRotatedSpot(spot, rowCount, true);
+			//spot = getTransposedSpot(getFlippedSpot(spot, rowCount, true));
 			break;
 		case Direction.LEFT:
 			spot = getFlippedSpot(spot, colCount);
-			//flipMatrix(grid, true);
 			break;
 	}
 
@@ -152,9 +165,11 @@ function findTileByCoords(x,y){
 }
 
 function slide(direction){
-	//oldGrid = copyMatrix(grid);
+
 	if(isAnimationActive)
 		return;
+
+	oldGrid = copyMatrix(grid);
 
 	switch(direction){
 		case Direction.RIGHT:
@@ -166,10 +181,10 @@ function slide(direction){
 			break;
 		case Direction.UP:
 			slidingDirection = Direction.UP;
-			transposeMatrix(grid);
-			flipMatrix(grid, true);
-			//rotateMatrix(grid, false);
-			console.log("Matrix after rotation");
+			//transposeMatrix(grid);
+			//flipMatrix(grid, true);
+			rotateMatrix(grid, true);
+			//console.log("Matrix after rotation");
 			console.table(grid);
 			break;
 		case Direction.LEFT:
@@ -191,7 +206,7 @@ function slide(direction){
 						grid[y][col] = 0;
 						++col;
 					} else if(grid[y][col + 1] === grid[y][col]){
-						console.log("col = " + col + " y = " + y);
+						//console.log("col = " + col + " y = " + y);
 						let tileToMerge = findTileByCoords(col + 1, y);
 						if(!tileToMerge.isMerged){
 							tileToMerge.isMerged = true;
@@ -214,32 +229,29 @@ function slide(direction){
 					destSpot.x = col;
 				}
 				destSpot.y = y;
-				console.log("destSpot = ", destSpot);
+				//console.log("destSpot = ", destSpot);
 
 				switch(direction){
 					case Direction.RIGHT:
 						break;
 					case Direction.DOWN:
 						destSpot = getTransposedSpot(destSpot);
-						//rotateMatrix(grid, false);
 						break;
 					case Direction.UP:
-						destSpot = getTransposedSpot(getFlippedSpot(destSpot, rowCount, true));
-						//destSpot = getRotatedSpot(destSpot, rowCount);
-						//rotateMatrix(grid, true);
+						//destSpot = getTransposedSpot(getFlippedSpot(destSpot, rowCount, true));
+						destSpot = getRotatedSpot(destSpot, rowCount, true);
 						break;
 					case Direction.LEFT:
 						destSpot = getFlippedSpot(destSpot, colCount);
-						//flipMatrix(grid, true);
 						break;
 				}
 
-				console.log("destSpot = ", destSpot);
+				//console.log("destSpot = ", destSpot);
 				tileToSlide.destX = destSpot.x * tileSize;
 				tileToSlide.destY = destSpot.y * tileSize;
-				console.log("tileToSlide.destX = " + tileToSlide.destX);
-				console.log("tileToSlide.destY = " + tileToSlide.destY);
-				console.log("tileToSlide.isSliding() = ", tileToSlide.isSliding());
+				//console.log("tileToSlide.destX = " + tileToSlide.destX);
+				//console.log("tileToSlide.destY = " + tileToSlide.destY);
+				//console.log("tileToSlide.isSliding() = ", tileToSlide.isSliding());
 				isAnimationActive = true;
 			}
 		}
@@ -252,16 +264,14 @@ function slide(direction){
 			transposeMatrix(grid);
 			break;
 		case Direction.UP:
-			flipMatrix(grid, true);
-			transposeMatrix(grid);
+			rotateMatrix(grid, false);
+			//flipMatrix(grid, true);
+			//transposeMatrix(grid);
 			break;
 		case Direction.LEFT:
 			flipMatrix(grid);
 			break;
 	}
-
-	//console.log("exit function slide(direction)");
-	//(grid);
 }
 
 function renderEmptyField(){
@@ -327,8 +337,30 @@ function gameTick(){
 				checkWin();
 			}
 			resetMergingFactor();
+
+			if(checkIfSomethingMoved()){
+				placeNewTile();
+			}
 		}
 	}
+}
+
+function checkIfSomethingMoved(){
+	console.log("Checking if something moved");
+	console.log("Current grid");
+	console.table(grid);
+	console.log("Old grid");
+	console.table(oldGrid);
+	for(let y = 0; y < grid.length; ++y){
+		for(let x = 0; x < grid[y].length; ++x){
+			if(grid[y][x] !== oldGrid[y][x]){
+				console.log("Something moved");
+				return true;
+			}
+		}
+	}
+	console.log("Nothing moved");
+	return false;
 }
 
 function checkWin(){
@@ -337,19 +369,6 @@ function checkWin(){
 	}
 }
 
-function checkGameOver(){
-	for(let y = 0; y < grid.length; ++y){
-		for(let x = 0; x < grid[y].length; ++x){
-			let neighbours = getNeighbours(x,y);
-			for(let i = 0; i < neighbours.length; ++i){
-				if(neighbours[i] === grid[y][x]){
-					return false;
-				}
-			}
-		}
-	}
-	return true;
-}
 
 function resetMergingFactor(){
 	tiles.forEach(tile => tile.isMerged = false);
@@ -368,7 +387,7 @@ function keyReleased(){
 	//console.log("enter keyReleased()");
 	//console.table(grid);
 	if(key === ' '){
-		addTile();
+		placeNewTile();
 	}
 	switch(keyCode){
 		case LEFT_ARROW:

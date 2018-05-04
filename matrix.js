@@ -53,9 +53,10 @@ function getFlippedSpot(spot, dimension, horizontally = true){
 }
 
 function getRotatedSpot(spot, dimension, clockwise = true){
-	if(clockwise){
+	return getTransposedSpot(getFlippedSpot(spot, dimension, clockwise));
+	/*if(clockwise){
 		return { x: spot.y, y: dimension - 1 - spot.x };		
 	} else {
 		return { x: dimension - 1 - spot.y, y: spot.x };
-	}
+	}*/
 }

@@ -29,7 +29,7 @@ class Tile {
 			textAlign(CENTER, CENTER);
 			textSize(54);
 			noStroke();
-			text(this.value, this.x + tileSize / 2 + HALF_GAP,
+			text(this.value, this.x + (tileSize + HALF_GAP) / 2,
 			 this.y + tileSize / 2 + HALF_GAP);
 		}
 	}

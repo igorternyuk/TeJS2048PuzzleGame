@@ -16,10 +16,7 @@ function copyMatrix(matrix){
 	return newMatrix;
 }
 
-function rotateMatrix(matrix, clockwise = true){
-	transposeMatrix(matrix);
-	flipMatrix(matrix, clockwise);
-}
+
 
 function transposeMatrix(matrix){
 	for(let i = 0; i < matrix.length; ++i){
@@ -38,6 +35,15 @@ function flipMatrix(matrix, horizontally = true){
 	}
 }
 
+function rotateMatrix(matrix, clockwise = true){
+	transposeMatrix(matrix);
+	flipMatrix(matrix, clockwise);
+}
+
+function getTransposedSpot(spot){
+	return { x: spot.y, y: spot.x };
+}
+
 function getFlippedSpot(spot, dimension, horizontally = true){
 	if(horizontally){
 		return { x: dimension - 1 - spot.x, y: spot.y };
@@ -48,8 +54,8 @@ function getFlippedSpot(spot, dimension, horizontally = true){
 
 function getRotatedSpot(spot, dimension, clockwise = true){
 	if(clockwise){
-		return { x: dimension - 1 - spot.y, y: spot.x};		
+		return { x: spot.y, y: dimension - 1 - spot.x };		
 	} else {
-		return { x: spot.y, y: dimension - 1 - spot.x};
+		return { x: dimension - 1 - spot.y, y: spot.x };
 	}
 }

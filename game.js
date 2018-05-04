@@ -25,7 +25,7 @@ let gridRotation = 0;
 let tiles = [];
 let mergingTiles = [];
 let gameState = GameState.PLAYING;
-let slideDirection = Direction.RIGHT;
+let slidingDirection = Direction.RIGHT;
 let maxTileValue = 2;
 let score = 0;
 let isAnimationActive = false;
@@ -34,6 +34,10 @@ function setup() {
     createCanvas(canvasWidth, canvasHeight);
     frameRate(50);
     grid = createMatrix(rowCount,colCount, 0);
+    oldGrid = copyMatrix(grid);
+    console.log(getFlippedSpot({x:0, y:0}, 4));
+    console.log(getFlippedSpot({x:1, y:0}, 4));
+    console.log(getFlippedSpot({x:1, y:1}, 4));
     //addTile();
     //addTile();
     createTestTiles();
@@ -107,8 +111,30 @@ function isValidSpot(x,y){
 }
 
 function findTileByCoords(x,y){
+	console.log("findTileByCoords => x= " + x + " y = " + y);
+	console.log("slidingDirection = ", slidingDirection);
+	var spot = { x: x, y: y };
+	switch(slidingDirection){
+		case Direction.RIGHT:
+			break;
+		case Direction.DOWN:
+			spot = getTransposedSpot(spot);
+			//rotateMatrix(grid, false);
+			break;
+		case Direction.UP:
+			spot = getFlippedSpot(getTransposedSpot(spot), colCount, false);
+			//rotateMatrix(grid, true);
+			break;
+		case Direction.LEFT:
+			spot = getFlippedSpot(spot, rowCount, true);
+			//flipMatrix(grid, true);
+			break;
+	}
+
+	console.log("spot = ", spot);
 	for(let i = 0; i < tiles.length; ++i){
-		if(tiles[i].destX === x * tileSize && tiles[i].destY === y * tileSize){
+		if(tiles[i].destX === spot.x * tileSize && tiles[i].destY === spot.y * tileSize){
+			console.log("tile found: ", tiles[i]);
 			return tiles[i];
 		}
 	}
@@ -116,6 +142,30 @@ function findTileByCoords(x,y){
 }
 
 function slide(direction){
+	//oldGrid = copyMatrix(grid);
+	if(isAnimationActive)
+		return;
+
+	switch(direction){
+		case Direction.RIGHT:
+			slidingDirection = Direction.RIGHT;
+			break;
+		case Direction.DOWN:
+			slidingDirection = Direction.DOWN;
+			transposeMatrix(grid);
+			break;
+		case Direction.UP:
+			slidingDirection = Direction.UP;
+			rotateMatrix(grid, true);
+			break;
+		case Direction.LEFT:
+			slidingDirection = Direction.LEFT;
+			//console.log("trying to slide left");
+			flipMatrix(grid, true);
+			//console.table(grid);
+			break;
+	}
+
 	for(let y = 0; y < grid.length; ++y){
 		for(let x = grid[y].length - 2; x >= 0; --x){
 			if(grid[y][x] > 0){
@@ -129,6 +179,7 @@ function slide(direction){
 						grid[y][col] = 0;
 						++col;
 					} else if(grid[y][col + 1] === grid[y][col]){
+						console.log("col = " + col + " y = " + y);
 						let tileToMerge = findTileByCoords(col + 1, y);
 						if(!tileToMerge.isMerged){
 							tileToMerge.isMerged = true;
@@ -143,19 +194,61 @@ function slide(direction){
 						break inner;
 					}
 				}
+
+				let destSpot = { x: 0, y: 0 };
 				if(isMerging){
-					tileToSlide.destX = (col + 1) * tileSize;
+					destSpot.x = col + 1;
 				} else {
-					tileToSlide.destX = col * tileSize;
+					destSpot.x = col;
 				}
+				destSpot.y = y;
+				console.log("destSpot = ", destSpot);
+
+				switch(direction){
+					case Direction.RIGHT:
+						break;
+					case Direction.DOWN:
+						destSpot = getTransposedSpot(destSpot);
+						//rotateMatrix(grid, false);
+						break;
+					case Direction.UP:
+						destSpot = getRotatedSpot(destSpot, rowCount, false);
+						//rotateMatrix(grid, true);
+						break;
+					case Direction.LEFT:
+						destSpot = getFlippedSpot(destSpot, rowCount, true);
+						//flipMatrix(grid, true);
+						break;
+				}
+
+				
+				tileToSlide.destX = destSpot.x * tileSize;
+				tileToSlide.destY = destSpot.y * tileSize;
+				console.log("tileToSlide.destX = " + tileToSlide.destX);
+				console.log("tileToSlide.destY = " + tileToSlide.destY);
+				console.log("tileToSlide.isSliding() = ", tileToSlide.isSliding());
 				isAnimationActive = true;
 			}
 		}
 	}
 
+	switch(direction){
+		case Direction.RIGHT:
+			break;
+		case Direction.DOWN:
+			transposeMatrix(grid);
+			break;
+		case Direction.UP:
+			rotateMatrix(grid, false);
+			break;
+		case Direction.LEFT:
+			flipMatrix(grid, true);
+			break;
+	}
+
+	//console.log("exit function slide(direction)");
+	//(grid);
 }
-
-
 
 function renderEmptyField(){
 	grid.forEach((row, y) => {
@@ -199,13 +292,11 @@ function mayBeStopAnimation(){
 	return true;
 }
 
-
-
 function gameTick(){
 	if(isAnimationActive){
 		tiles.forEach(tile => {
 			if(tile.isSliding()){
-				tile.slide(slideDirection);
+				tile.slide(slidingDirection);
 			}
 		});
 		for(let i = 0; i < mergingTiles.length; ++i){
@@ -225,30 +316,6 @@ function gameTick(){
 		}
 	}
 }
-
-/*
-  def tick( self ):
-        if self.__is_animating:
-            for tile in self.tiles:
-                if tile.is_sliding():
-                    tile.slide( self.__animation_direction )
-            for pair in self.__merging_tiles:
-                if ( not pair[2] ) and pair[0].x == pair[1].x and pair[0].y == pair[1].y:
-                     self.__merge_tiles_( pair )
-            self.__is_animating = self.__check_animation_()
-            if not self.__is_animating:
-                self.__merging_tiles.clear()
-                #self.__synchronize_tiles_with_grid_()
-                if self.game_state == GameState.PLAYING:
-                    self.__check_win_()
-                self.__reset_merging_factor_()
-                if self.__check_if_something_moved_():
-                    self.__place_new_tile_()
-                    if ( self.__count_free_spots_() == 0
-                     and not self.__check_if_player_has_merging_moves_() ):
-                        self.__game_over_()
-                self.print_grid()
-*/
 
 function checkWin(){
 	if(maxTileValue >= WINNIG_SCORE){
@@ -280,9 +347,12 @@ function draw() {
 	background("#9d816f");
 	renderEmptyField();
 	tiles.forEach(tile => tile.render());
+	//console.table(grid);
 }
 
 function keyReleased(){
+	//console.log("enter keyReleased()");
+	//console.table(grid);
 	if(key === ' '){
 		addTile();
 	}
@@ -300,9 +370,12 @@ function keyReleased(){
 			//rotateMatrix(grid);
 			break;
 		case DOWN_ARROW:
+			//console.log("case DOWN_ARROW");
+			//console.table(grid);
 			slide(Direction.DOWN);
 			//rotateMatrix(grid, false);
 			break;
 	}
-	console.table(grid);
+	//console.log("exit keyReleased()");
+	//console.table(grid);
 }

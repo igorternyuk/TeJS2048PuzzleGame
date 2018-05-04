@@ -14,8 +14,8 @@ class Tile {
 	}
 
 	slide(direction){
-		this.x += direction.dx;
-		this.y += direction.dy;
+		this.x += 4 * direction.dx;
+		this.y += 4 * direction.dy;
 	}
 
 	render(){

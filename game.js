@@ -14,7 +14,7 @@ const Direction = Object.freeze({
 
 const FOUR_PROBABILITY = 0.1;
 const HALF_GAP = 7;
-
+const WINNIG_SCORE = 2048;
 var tileSize = 100;
 let rowCount = 4;
 let colCount = 4;
@@ -23,22 +23,43 @@ var canvasHeight = rowCount * tileSize + HALF_GAP;
 let grid, oldGrid;
 let gridRotation = 0;
 let tiles = [];
-let merging_tiles = [];
+let mergingTiles = [];
 let gameState = GameState.PLAYING;
 let slideDirection = Direction.RIGHT;
+let maxTileValue = 2;
+let score = 0;
+let isAnimationActive = false;
 
 function setup() {
     createCanvas(canvasWidth, canvasHeight);
-    frameRate(10);
+    frameRate(50);
     grid = createMatrix(rowCount,colCount, 0);
-    addTile();
-    addTile();
-    let flippedSpot = getFlippedSpot({x:2,y:3}, 4, true);
-    console.log(flippedSpot);
-    let rotatedSpot = getRotatedSpot({x:3,y:1}, 4, false);
-    console.log(rotatedSpot);
+    //addTile();
+    //addTile();
+    createTestTiles();
+}
+
+function createTestTiles(){
+	grid[0][0] = 2;
+    let tile = new Tile(0 * tileSize, 0 * tileSize, 2);
+	tiles.push(tile);
+	grid[0][2] = 2;
+	tiles.push(new Tile(2 * tileSize, 0 * tileSize, 2));
+	grid[0][3] = 4;
+	tiles.push(new Tile(3 * tileSize, 0 * tileSize, 4));
+	for(let i = 0; i < 4; ++i){
+		grid[1][i] = 2;
+		tiles.push(new Tile(i * tileSize, tileSize, 2));
+	}
+
+	grid[2][0] = 4;
+	tiles.push(new Tile(0 * tileSize, 2 * tileSize, 4));
+
+	grid[2][2] = 4;
+	tiles.push(new Tile(2 * tileSize, 2 * tileSize, 4));
 }
     /*
+}
 function getFlippedSpot(spot, dimension, horizontally = true){
 function getRotatedSpot(spot, dimension, clockwise = true){
     */
@@ -60,10 +81,13 @@ function addTile(){
 		tiles.push(new Tile(randSpot.x * tileSize, randSpot.y * tileSize, randValue));
 
 	} else {
-		//Check von Neumann neighbourhood
-		//and if there are no possible merging game over
+		if(checkGameOver()){
+			gameState = GameState.DEFEAT;
+		}
 	}
 }
+
+
 
 function getNeighbours(x, y){
 	let neighbours = [];
@@ -72,7 +96,7 @@ function getNeighbours(x, y){
 		let nx = x + offset.dx;
 		let ny = y + offset.dy;
 		if(isValidSpot(nx, ny)){
-			neighbours.push();
+			neighbours.push(grid[ny][nx]);
 		}
 	}
 	return neighbours;
@@ -98,77 +122,40 @@ function slide(direction){
 				let tileToSlide = findTileByCoords(x,y); 
 				let col = x;
 				let isMerging = false;
+				inner:
 				while(col < grid[y].length - 1){
-					
+					if(grid[y][col + 1] === 0){
+						grid[y][col + 1] = grid[y][col];
+						grid[y][col] = 0;
+						++col;
+					} else if(grid[y][col + 1] === grid[y][col]){
+						let tileToMerge = findTileByCoords(col + 1, y);
+						if(!tileToMerge.isMerged){
+							tileToMerge.isMerged = true;
+							tileToSlide.isMerged = true;
+							grid[y][col + 1] *= 2;
+							grid[y][col] = 0;
+							mergingTiles.push({toMerge: tileToMerge, toRemove: tileToSlide, merged: false });
+							isMerging = true;
+							break inner;
+						}
+					} else {
+						break inner;
+					}
 				}
+				if(isMerging){
+					tileToSlide.destX = (col + 1) * tileSize;
+				} else {
+					tileToSlide.destX = col * tileSize;
+				}
+				isAnimationActive = true;
 			}
 		}
 	}
 
 }
 
-/*
-def __slide_right_( self ):
-        for i in range( self.field_height ):
-            for j in range( self.field_width - 2, -1, -1 ):
-                if self.__grid[i][j] > 0:
-                    tile_to_slide = self.__find_tile_by_coords_(
-                     j * self.__tile_size, i * self.__tile_size )
-                    col = j
-                    is_merging = False
-                    while col < self.field_width - 1:
-                        if self.__grid[i][col + 1] == 0:
-                            self.__grid[i][col + 1] = self.__grid[i][col]
-                            self.__grid[i][col] = 0
-                            col += 1
-                        elif self.__grid[i][col] == self.__grid[i][col + 1]:
-                            tile_to_merge = self.__find_tile_by_coords_(
-                             ( col + 1 ) * self.__tile_size, i * self.__tile_size )
-                            if not tile_to_merge.is_merged:
-                                tile_to_merge.is_merged = True
-                                tile_to_slide.is_merged = True
-                                self.__grid[i][col + 1] *= 2
-                                self.__grid[i][col] = 0
-                                print( str( tile_to_slide ) )
-                                print( str( tile_to_merge ) )
-                                self.__merging_tiles.append( [ tile_to_slide,
-                                 tile_to_merge, False ] )
-                                is_merging = True
-                            break
-                        else:
-                            break
-                    if is_merging:
-                        tile_to_slide.dest_x = ( col + 1 ) * self.__tile_size
-                    else:
-                        tile_to_slide.dest_x = col * self.__tile_size
-                    self.__is_animating = True
-                    self.print_grid()
-*/
 
-function keyReleased(){
-	if(key === ' '){
-		addTile();
-	}
-	switch(keyCode){
-		case LEFT_ARROW:
-			//slide(Direction.LEFT);
-			flipMatrix(grid);
-			break;
-		case RIGHT_ARROW:
-			//slide(Direction.RIGHT);
-			flipMatrix(grid, false);
-			break;
-		case UP_ARROW:
-			//slide(Direction.UP);
-			rotateMatrix(grid);
-			break;
-		case DOWN_ARROW:
-			//slide(Direction.DOWN);
-			rotateMatrix(grid, false);
-			break;
-	}
-	console.table(grid);
-}
 
 function renderEmptyField(){
 	grid.forEach((row, y) => {
@@ -181,14 +168,141 @@ function renderEmptyField(){
 	});
 }
 
+function mergeTiles(couple){
+	couple.toMerge.value *= 2;
+	score += couple.toMerge.value;
+	if(maxTileValue < couple.toMerge.value){
+		maxTileValue = couple.toMerge.value;
+	}
+	couple.merged = true;
+	let indexToRemove = 0;
+	for(let i = 0; i < tiles.length; ++i){
+		if(tiles[i] === couple.toRemove){
+			indexToRemove = i;
+			break;
+		}
+	}
+	tiles.splice(indexToRemove, 1);
+}
+
+function mayBeStopAnimation(){
+	for(let i = 0; i < tiles.length; ++i){
+		if(tiles[i].isSliding()){
+			return false;
+		}
+	}
+	for(let i = 0; i < mergingTiles.length; ++i){
+		if(!mergingTiles[i].merged){
+			return false;
+		}
+	}
+	return true;
+}
+
+
+
+function gameTick(){
+	if(isAnimationActive){
+		tiles.forEach(tile => {
+			if(tile.isSliding()){
+				tile.slide(slideDirection);
+			}
+		});
+		for(let i = 0; i < mergingTiles.length; ++i){
+			if(!mergingTiles[i].merged
+			 && mergingTiles[i].toRemove.x === mergingTiles[i].toMerge.x
+			  && mergingTiles[i].toRemove.y === mergingTiles[i].toMerge.y){
+				mergeTiles(mergingTiles[i]);
+			}
+		}
+		isAnimationActive = !mayBeStopAnimation();
+		if(!isAnimationActive){
+			mergingTiles = [];
+			if(gameState === GameState.PLAYING){
+				checkWin();
+			}
+			resetMergingFactor();
+		}
+	}
+}
+
+/*
+  def tick( self ):
+        if self.__is_animating:
+            for tile in self.tiles:
+                if tile.is_sliding():
+                    tile.slide( self.__animation_direction )
+            for pair in self.__merging_tiles:
+                if ( not pair[2] ) and pair[0].x == pair[1].x and pair[0].y == pair[1].y:
+                     self.__merge_tiles_( pair )
+            self.__is_animating = self.__check_animation_()
+            if not self.__is_animating:
+                self.__merging_tiles.clear()
+                #self.__synchronize_tiles_with_grid_()
+                if self.game_state == GameState.PLAYING:
+                    self.__check_win_()
+                self.__reset_merging_factor_()
+                if self.__check_if_something_moved_():
+                    self.__place_new_tile_()
+                    if ( self.__count_free_spots_() == 0
+                     and not self.__check_if_player_has_merging_moves_() ):
+                        self.__game_over_()
+                self.print_grid()
+*/
+
+function checkWin(){
+	if(maxTileValue >= WINNIG_SCORE){
+		gameState = GameState.SUCCEEDED_2048;
+	}
+}
+
+function checkGameOver(){
+	for(let y = 0; y < grid.length; ++y){
+		for(let x = 0; x < grid[y].length; ++x){
+			let neighbours = getNeighbours(x,y);
+			for(let i = 0; i < neighbours.length; ++i){
+				if(neighbours[i] === grid[y][x]){
+					return false;
+				}
+			}
+		}
+	}
+	return true;
+}
+
+function resetMergingFactor(){
+	tiles.forEach(tile => tile.isMerged = false);
+}
+
 //main loop
 function draw() {
+	gameTick();
 	background("#9d816f");
 	renderEmptyField();
 	tiles.forEach(tile => tile.render());
 }
 
-
-
-
-
+function keyReleased(){
+	if(key === ' '){
+		addTile();
+	}
+	switch(keyCode){
+		case LEFT_ARROW:
+			slide(Direction.LEFT);
+			//flipMatrix(grid);
+			break;
+		case RIGHT_ARROW:
+			slide(Direction.RIGHT);
+			//flipMatrix(grid, false);
+			break;
+		case UP_ARROW:
+			slide(Direction.UP);
+			//rotateMatrix(grid);
+			break;
+		case DOWN_ARROW:
+			slide(Direction.DOWN);
+			//rotateMatrix(grid, false);
+			break;
+	}
+	console.table(grid);
+}

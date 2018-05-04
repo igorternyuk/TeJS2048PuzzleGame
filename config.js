@@ -1,3 +1,5 @@
+
+
 function getColorSize(value){
 	switch(value){
         case 2:
@@ -11,7 +13,7 @@ function getColorSize(value){
         case 32:
         	return { color: '#9b59b6', size: 52 };
         case 64:
-        	return { color: '#9b59b6', size: 52 };
+        	return { color: '#f1c40f', size: 52 };
         case 128:
         	return { color: '#f39c12', size: 42 };
         case 256:

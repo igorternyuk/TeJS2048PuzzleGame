@@ -24,21 +24,23 @@ class Tile {
 			let style = getColorSize(this.value);
 			fill(style.color);
 			if(this.highlight){
-				stroke(127,0,0);
-				strokeWeight(HALF_GAP);
+				stroke(255,0,0);
+				strokeWeight(5);
 			} else {
-				noStroke();
+				stroke(0);
+				strokeWeight(1);
+				//noStroke();
 			}			
 
-			rect(this.x + HALF_GAP, this.y + HALF_GAP, tileSize - HALF_GAP,
-			 tileSize - HALF_GAP, RADIUS, RADIUS);
+			rect(this.x + HALF_GAP, this.y + HALF_GAP, TILE_SIZE - HALF_GAP,
+			 TILE_SIZE - HALF_GAP, RADIUS, RADIUS);
 			fill(0,0,0);
 			textFont('Arial');
 			textAlign(CENTER, CENTER);
 			textSize(style.size);
 			noStroke();
-			text(this.value, this.x + (tileSize + HALF_GAP) / 2,
-			 this.y + tileSize / 2 + HALF_GAP);
+			text(this.value, this.x + (TILE_SIZE + HALF_GAP) / 2,
+			 this.y + TILE_SIZE / 2 + HALF_GAP);
 		}
 	}
 }

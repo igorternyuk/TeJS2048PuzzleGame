@@ -11,12 +11,13 @@ function copyMatrix(matrix){
 	let newMatrix = new Array(matrix.length);
 	for(let i = 0; i < newMatrix.length; ++i){
 		newMatrix[i] = new Array(matrix[i].length);
+		for(let j = 0; j < newMatrix[i].length; ++j){
+			newMatrix[i][j] = matrix[i][j];
+		}
 	}
-	newMatrix.forEach(row => row.fill(0));
+
 	return newMatrix;
 }
-
-
 
 function transposeMatrix(matrix){
 	for(let i = 0; i < matrix.length; ++i){
@@ -54,9 +55,4 @@ function getFlippedSpot(spot, dimension, horizontally = true){
 
 function getRotatedSpot(spot, dimension, clockwise = true){
 	return getTransposedSpot(getFlippedSpot(spot, dimension, clockwise));
-	/*if(clockwise){
-		return { x: spot.y, y: dimension - 1 - spot.x };		
-	} else {
-		return { x: dimension - 1 - spot.y, y: spot.x };
-	}*/
 }
